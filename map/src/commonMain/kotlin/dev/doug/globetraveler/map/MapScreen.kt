@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -242,11 +243,13 @@ private fun Preview_MapLoadErrorBanner() {
 
 @Composable
 fun CounterChip(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
+    // Deliberately theme-independent: the chip floats over the light basemap in both
+    // app themes, so it uses a scrim that stays legible regardless of color scheme.
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-        shadowElevation = 4.dp,
+        color = Color.Black.copy(alpha = 0.55f),
+        contentColor = Color.White,
     ) {
         Text(
             text = "$visitedCount / $totalCount visited",
