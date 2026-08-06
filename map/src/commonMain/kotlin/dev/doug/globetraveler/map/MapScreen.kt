@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.doug.globetraveler.design.GlobeTheme
 import dev.doug.globetraveler.design.MapPalette
 import dev.doug.globetraveler.domain.CameraDefaults
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -31,7 +32,11 @@ import kotlinx.serialization.json.contentOrNull
 import org.koin.compose.viewmodel.koinViewModel
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.asString
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.contains
+import org.maplibre.compose.expressions.dsl.feature
+import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.layers.FillLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.map.MaplibreMap
@@ -71,8 +76,8 @@ fun MapContent(
         if (cameraDefaults != null) {
             StatesMap(
                 cameraDefaults = cameraDefaults,
-                visitedGeoJson = state.visitedGeoJson,
-                unvisitedGeoJson = state.unvisitedGeoJson,
+                geometryGeoJson = state.geometryGeoJson,
+                visitedCodes = state.visitedCodes,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
             )
@@ -101,8 +106,8 @@ fun MapContent(
 @Composable
 private fun StatesMap(
     cameraDefaults: CameraDefaults,
-    visitedGeoJson: String,
-    unvisitedGeoJson: String,
+    geometryGeoJson: String,
+    visitedCodes: ImmutableSet<String>,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
 ) {
@@ -112,8 +117,8 @@ private fun StatesMap(
         key(retryToken) {
             LoadableMap(
                 cameraDefaults = cameraDefaults,
-                visitedGeoJson = visitedGeoJson,
-                unvisitedGeoJson = unvisitedGeoJson,
+                geometryGeoJson = geometryGeoJson,
+                visitedCodes = visitedCodes,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
                 onLoadFailed = { loadFailed = true },
@@ -134,8 +139,8 @@ private fun StatesMap(
 @Composable
 private fun LoadableMap(
     cameraDefaults: CameraDefaults,
-    visitedGeoJson: String,
-    unvisitedGeoJson: String,
+    geometryGeoJson: String,
+    visitedCodes: ImmutableSet<String>,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
     onLoadFailed: () -> Unit,
@@ -152,25 +157,29 @@ private fun LoadableMap(
         onMapLoadFailed = { onLoadFailed() },
         modifier = Modifier.fillMaxSize(),
     ) {
-        val unvisited = rememberGeoJsonSource(GeoJsonData.JsonString(unvisitedGeoJson))
-        val visited = rememberGeoJsonSource(GeoJsonData.JsonString(visitedGeoJson))
+        // The geometry is loaded into a single static source exactly once; visited-ness
+        // is a layer filter, so toggling never re-parses or re-tessellates the polygons.
+        val states = rememberGeoJsonSource(GeoJsonData.JsonString(geometryGeoJson))
+        val isVisited = const(visitedCodes.toList()).contains(feature.get("code").asString())
 
         FillLayer(
             id = "unvisited-fill",
-            source = unvisited,
+            source = states,
+            filter = !isVisited,
             color = const(MapPalette.unvisitedFill),
             onClick = tapHandler(onRegionTapped),
             onLongClick = tapHandler(onRegionLongPressed),
         )
         LineLayer(
-            id = "unvisited-borders",
-            source = unvisited,
+            id = "state-borders",
+            source = states,
             color = const(MapPalette.border),
             width = const(1.dp),
         )
         FillLayer(
             id = "visited-fill",
-            source = visited,
+            source = states,
+            filter = isVisited,
             color = const(MapPalette.visitedFill),
             opacity = const(0.6f),
             onClick = tapHandler(onRegionTapped),
@@ -178,7 +187,8 @@ private fun LoadableMap(
         )
         LineLayer(
             id = "visited-borders",
-            source = visited,
+            source = states,
+            filter = isVisited,
             color = const(MapPalette.visitedOutline),
             width = const(1.5.dp),
         )

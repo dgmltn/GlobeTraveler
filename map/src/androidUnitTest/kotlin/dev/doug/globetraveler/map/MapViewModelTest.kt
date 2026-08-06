@@ -2,6 +2,7 @@ package dev.doug.globetraveler.map
 
 import dev.doug.globetraveler.map.fakes.FakeMapPackRepository
 import dev.doug.globetraveler.map.fakes.FakeVisitRepository
+import dev.doug.globetraveler.map.fakes.TEST_GEOMETRY
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -38,15 +39,15 @@ class MapViewModelTest {
         withTimeout(5.seconds) { viewModel.state.first(predicate) }
 
     @Test
-    fun `loads pack into counts and camera`() = runTest {
+    fun `loads pack into counts, camera, and static geometry`() = runTest {
         val state = awaitState { !it.loading }
 
         assertEquals("Test States", state.mapName)
         assertEquals(3, state.totalCount)
         assertEquals(0, state.visitedCount)
+        assertEquals(emptySet(), state.visitedCodes)
         assertEquals(39.5, state.cameraDefaults?.latitude)
-        assertEquals(3, featureCount(state.unvisitedGeoJson))
-        assertEquals(0, featureCount(state.visitedGeoJson))
+        assertEquals(TEST_GEOMETRY, state.geometryGeoJson)
     }
 
     @Test
@@ -55,13 +56,21 @@ class MapViewModelTest {
 
         viewModel.onRegionTapped("CA")
         val visited = awaitState { it.visitedCount == 1 }
-        assertEquals(1, featureCount(visited.visitedGeoJson))
-        assertEquals(2, featureCount(visited.unvisitedGeoJson))
+        assertEquals(setOf("CA"), visited.visitedCodes)
 
         viewModel.onRegionTapped("CA")
         val reverted = awaitState { it.visitedCount == 0 }
-        assertEquals(0, featureCount(reverted.visitedGeoJson))
-        assertEquals(3, featureCount(reverted.unvisitedGeoJson))
+        assertEquals(emptySet(), reverted.visitedCodes)
+    }
+
+    @Test
+    fun `geometry is not rebuilt when visits change`() = runTest {
+        val initial = awaitState { !it.loading }
+
+        viewModel.onRegionTapped("CA")
+        val visited = awaitState { it.visitedCount == 1 }
+
+        assertEquals(initial.geometryGeoJson, visited.geometryGeoJson)
     }
 
     @Test
@@ -83,11 +92,11 @@ class MapViewModelTest {
         viewModel.onDetailsSave(LocalDate(2025, 3, 9), "Reno weekend")
 
         val state = awaitState { it.visitedCount == 1 }
+        assertEquals(setOf("NV"), state.visitedCodes)
         viewModel.onRegionLongPressed("NV")
         val details = awaitState { it.details?.visit != null }.details
         assertEquals(LocalDate(2025, 3, 9), details?.visit?.visitedAt)
         assertEquals("Reno weekend", details?.visit?.notes)
-        assertEquals(1, featureCount(state.visitedGeoJson))
     }
 
     @Test
@@ -114,6 +123,3 @@ class MapViewModelTest {
         assertNull(awaitState { it.details == null }.details)
     }
 }
-
-private fun featureCount(featureCollection: String): Int =
-    Regex("\"type\":\"Feature\"").findAll(featureCollection).count()

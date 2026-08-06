@@ -12,6 +12,7 @@ import dev.doug.globetraveler.domain.Visit
 import dev.doug.globetraveler.domain.VisitRepository
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,16 +31,11 @@ class MapViewModel(
 
     private val log = Logger.withTag("MapViewModel")
 
-    private data class LoadedPack(
-        val pack: MapPack,
-        val parsedFeatures: GeoJsonSplitter.ParsedFeatures,
-    )
-
-    private val loadedPack = MutableStateFlow<LoadedPack?>(null)
+    private val pack = MutableStateFlow<MapPack?>(null)
     private val detailsCode = MutableStateFlow<String?>(null)
 
     val state: StateFlow<MapUiState> = combine(
-        loadedPack,
+        pack,
         visitRepository.observeVisits(US_STATES_MAP_ID),
         detailsCode,
     ) { loaded, visits, details ->
@@ -48,9 +44,7 @@ class MapViewModel(
 
     init {
         viewModelScope.launch {
-            loadedPack.value = mapPackRepository.load(US_STATES_MAP_ID).let {
-                LoadedPack(it, GeoJsonSplitter.parse(it.geometryGeoJson))
-            }
+            pack.value = mapPackRepository.load(US_STATES_MAP_ID)
         }
     }
 
@@ -94,19 +88,16 @@ class MapViewModel(
 
     private fun regionId(code: String) = RegionId(US_STATES_MAP_ID, RegionCode(code))
 
-    private fun buildState(loaded: LoadedPack?, visits: List<Visit>, detailsCode: String?): MapUiState {
-        if (loaded == null) return MapUiState()
-        val visitedCodes = visits.map { it.regionId.code.value }.toSet()
-        val split = GeoJsonSplitter.split(loaded.parsedFeatures, visitedCodes)
-        val descriptor = loaded.pack.descriptor
+    private fun buildState(pack: MapPack?, visits: List<Visit>, detailsCode: String?): MapUiState {
+        if (pack == null) return MapUiState()
+        val descriptor = pack.descriptor
         return MapUiState(
             loading = false,
             mapName = descriptor.name,
             cameraDefaults = descriptor.camera,
             totalCount = descriptor.regions.size,
-            visitedCount = visitedCodes.size,
-            visitedGeoJson = split.visitedGeoJson,
-            unvisitedGeoJson = split.unvisitedGeoJson,
+            visitedCodes = visits.map { it.regionId.code.value }.toImmutableSet(),
+            geometryGeoJson = pack.geometryGeoJson,
             details = detailsCode?.let { code ->
                 descriptor.regions.firstOrNull { it.code.value == code }?.let { region ->
                     RegionDetails(
