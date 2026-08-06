@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "e92828451649a166a246e5666e614b16",
+    "entities": [
+      {
+        "tableName": "visits",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`mapId` TEXT NOT NULL, `regionCode` TEXT NOT NULL, `visitedAt` TEXT, `notes` TEXT, `markedAtEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`mapId`, `regionCode`))",
+        "fields": [
+          {
+            "fieldPath": "mapId",
+            "columnName": "mapId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "regionCode",
+            "columnName": "regionCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visitedAt",
+            "columnName": "visitedAt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "markedAtEpochMillis",
+            "columnName": "markedAtEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "mapId",
+            "regionCode"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e92828451649a166a246e5666e614b16')"
+    ]
+  }
+}
