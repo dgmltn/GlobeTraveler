@@ -3,8 +3,11 @@ package dev.doug.globetraveler.map
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +44,8 @@ import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.not
 import org.maplibre.compose.layers.FillLayer
 import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.map.GestureOptions
+import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
@@ -161,6 +166,12 @@ private fun LoadableMap(
     MaplibreMap(
         baseStyle = BaseStyle.Uri(if (darkTheme) DARK_STYLE_URI else LIGHT_STYLE_URI),
         cameraState = camera,
+        options = MapOptions(
+            // North-up always: with rotation impossible the compass never appears, so it
+            // can't get stuck on screen (it only auto-hides within ~1° of north).
+            gestureOptions = GestureOptions.RotationLocked,
+            ornamentOptions = globeOrnamentOptions(WindowInsets.safeDrawing.asPaddingValues()),
+        ),
         onMapLoadFailed = { onLoadFailed() },
         modifier = Modifier.fillMaxSize(),
     ) {
