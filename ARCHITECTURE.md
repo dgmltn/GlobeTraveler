@@ -14,7 +14,8 @@ Feature-split Kotlin Multiplatform modules; Compose Multiplatform UI on Android 
 Key decisions:
 
 - **Map rendering:** MapLibre Native via maplibre-compose (shared `commonMain` map UI),
-  OpenFreeMap Positron base style, no API key. Visited-ness is rendered as two GeoJSON
+  OpenFreeMap base styles (Positron in light mode, Dark in dark mode, following the
+  system color scheme), no API key. Visited-ness is rendered as two GeoJSON
   sources (visited/unvisited) recomputed by the ViewModel from Room state.
 - **Map packs are data:** a descriptor JSON (regions, camera) + a GeoJSON
   FeatureCollection whose features carry a `code` property. `us-states` is the only pack

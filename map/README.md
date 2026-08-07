@@ -3,7 +3,8 @@
 The map feature: the app's single screen.
 
 **Contains:** `MapScreen` (stateful root) → `MapContent` (stateless) → `StatesMap`
-(maplibre-compose map with OpenFreeMap Positron base style), `CounterChip`,
+(maplibre-compose map with OpenFreeMap base styles — Positron in light mode, Dark in
+dark mode), `CounterChip`,
 `MapLoadErrorBanner` (style-load failure + retry, which recreates the map), the
 `VisitDetailsSheet` (date + notes), and `MapViewModel` (single UiState StateFlow
 combining map pack + visits).

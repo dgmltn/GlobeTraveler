@@ -1,5 +1,6 @@
 package dev.doug.globetraveler.map
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,7 +49,8 @@ import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.Position
 
-private const val POSITRON_STYLE_URI = "https://tiles.openfreemap.org/styles/positron"
+private const val LIGHT_STYLE_URI = "https://tiles.openfreemap.org/styles/positron"
+private const val DARK_STYLE_URI = "https://tiles.openfreemap.org/styles/dark"
 
 @Composable
 fun MapScreen(viewModel: MapViewModel = koinViewModel()) {
@@ -152,8 +154,12 @@ private fun LoadableMap(
             zoom = cameraDefaults.zoom,
         ),
     )
+    // Basemap follows the phone's color scheme; the system bar icons do the same
+    // (dark icons in light mode, light in dark), so they stay legible over the tiles.
+    val darkTheme = isSystemInDarkTheme()
+    val palette = if (darkTheme) MapPalette.Dark else MapPalette.Light
     MaplibreMap(
-        baseStyle = BaseStyle.Uri(POSITRON_STYLE_URI),
+        baseStyle = BaseStyle.Uri(if (darkTheme) DARK_STYLE_URI else LIGHT_STYLE_URI),
         cameraState = camera,
         onMapLoadFailed = { onLoadFailed() },
         modifier = Modifier.fillMaxSize(),
@@ -167,21 +173,21 @@ private fun LoadableMap(
             id = "unvisited-fill",
             source = states,
             filter = !isVisited,
-            color = const(MapPalette.unvisitedFill),
+            color = const(palette.unvisitedFill),
             onClick = tapHandler(onRegionTapped),
             onLongClick = tapHandler(onRegionLongPressed),
         )
         LineLayer(
             id = "state-borders",
             source = states,
-            color = const(MapPalette.border),
+            color = const(palette.border),
             width = const(1.dp),
         )
         FillLayer(
             id = "visited-fill",
             source = states,
             filter = isVisited,
-            color = const(MapPalette.visitedFill),
+            color = const(palette.visitedFill),
             opacity = const(0.6f),
             onClick = tapHandler(onRegionTapped),
             onLongClick = tapHandler(onRegionLongPressed),
@@ -190,7 +196,7 @@ private fun LoadableMap(
             id = "visited-borders",
             source = states,
             filter = isVisited,
-            color = const(MapPalette.visitedOutline),
+            color = const(palette.visitedOutline),
             width = const(1.5.dp),
         )
     }
@@ -243,8 +249,8 @@ private fun Preview_MapLoadErrorBanner() {
 
 @Composable
 fun CounterChip(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
-    // Deliberately theme-independent: the chip floats over the light basemap in both
-    // app themes, so it uses a scrim that stays legible regardless of color scheme.
+    // Deliberately theme-independent: the black scrim + white text stays legible over
+    // both the light and dark basemaps, so the chip doesn't track the color scheme.
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50),
