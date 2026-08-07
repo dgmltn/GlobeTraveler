@@ -10,6 +10,7 @@ data class MapPalette(
     val visitedOutline: Color,
     val unvisitedFill: Color,
     val border: Color,
+    val youAreHere: Color,
 ) {
     companion object {
         val Light = MapPalette(
@@ -17,6 +18,7 @@ data class MapPalette(
             visitedOutline = Color(0xFF1B5E20),
             unvisitedFill = Color(0x14000000),
             border = Color(0xFF757575),
+            youAreHere = Color(0xFF1E88E5),
         )
 
         val Dark = MapPalette(
@@ -24,6 +26,7 @@ data class MapPalette(
             visitedOutline = Color(0xFFA5D6A7),
             unvisitedFill = Color(0x14FFFFFF),
             border = Color(0xFF9E9E9E),
+            youAreHere = Color(0xFF64B5F6),
         )
     }
 }

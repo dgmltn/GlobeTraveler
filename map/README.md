@@ -14,7 +14,9 @@ placement: no scale bar, attribution + logo on the bottom, safe-area padded), an
 source exactly once. Visited-ness is expressed as a layer `filter`
 (`code ∈ visitedCodes`) on the fill/outline layers — toggling a state swaps a tiny
 filter expression instead of re-parsing/re-tessellating geometry, so fills update
-instantly.
+instantly. A "you are here" dot (halo + dot `CircleLayer` pair over a one-point
+source) renders `MapUiState.userLocation` when known; it never moves the camera and
+takes no click handlers.
 
 **Depends on:** `:domain` (contracts), `:design` (theme/palette), maplibre-compose,
 Koin (compose + viewmodel), lifecycle, kotlinx-serialization,

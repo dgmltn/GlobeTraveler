@@ -1,6 +1,8 @@
 package dev.doug.globetraveler.map.fakes
 
+import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.domain.CameraDefaults
+import dev.doug.globetraveler.domain.DeviceLocationRepository
 import dev.doug.globetraveler.domain.MapDescriptor
 import dev.doug.globetraveler.domain.MapId
 import dev.doug.globetraveler.domain.MapPack
@@ -12,6 +14,7 @@ import dev.doug.globetraveler.domain.Visit
 import dev.doug.globetraveler.domain.VisitRepository
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
@@ -59,4 +62,10 @@ class FakeVisitRepository : VisitRepository {
         val existing = visits.value[visit.regionId]
         visits.value += visit.regionId to visit.copy(markedAt = existing?.markedAt ?: visit.markedAt)
     }
+}
+
+class FakeDeviceLocationRepository : DeviceLocationRepository {
+    private val locations = MutableSharedFlow<ApproximateLocation>(replay = 1)
+    override fun observeLocation(): Flow<ApproximateLocation> = locations
+    suspend fun emit(location: ApproximateLocation) = locations.emit(location)
 }

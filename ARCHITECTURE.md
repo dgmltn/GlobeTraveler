@@ -22,6 +22,9 @@ Key decisions:
   in v1 and is hardcoded in `:map`.
 - **Visits:** one Room row per visited region, keyed `(mapId, regionCode)`; row
   existence = visited; optional `visitedAt` date and `notes`.
+- **Approximate location:** the "you are here" dot is IP-geolocated (geojs.io via Ktor,
+  keyless) — state-level accuracy needs no OS location permissions. The bare-IP endpoint
+  is polled each minute; the geo lookup runs only when the IP changes.
 
 ## Dependency graph — Android app
 

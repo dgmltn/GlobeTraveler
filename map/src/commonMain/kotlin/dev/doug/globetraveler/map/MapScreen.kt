@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.doug.globetraveler.design.GlobeTheme
 import dev.doug.globetraveler.design.MapPalette
+import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.domain.CameraDefaults
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.datetime.LocalDate
@@ -42,6 +43,7 @@ import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.contains
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.not
+import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.FillLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.map.GestureOptions
@@ -86,6 +88,7 @@ fun MapContent(
                 cameraDefaults = cameraDefaults,
                 geometryGeoJson = state.geometryGeoJson,
                 visitedCodes = state.visitedCodes,
+                userLocation = state.userLocation,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
             )
@@ -116,6 +119,7 @@ private fun StatesMap(
     cameraDefaults: CameraDefaults,
     geometryGeoJson: String,
     visitedCodes: ImmutableSet<String>,
+    userLocation: ApproximateLocation?,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
 ) {
@@ -127,6 +131,7 @@ private fun StatesMap(
                 cameraDefaults = cameraDefaults,
                 geometryGeoJson = geometryGeoJson,
                 visitedCodes = visitedCodes,
+                userLocation = userLocation,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
                 onLoadFailed = { loadFailed = true },
@@ -149,6 +154,7 @@ private fun LoadableMap(
     cameraDefaults: CameraDefaults,
     geometryGeoJson: String,
     visitedCodes: ImmutableSet<String>,
+    userLocation: ApproximateLocation?,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
     onLoadFailed: () -> Unit,
@@ -210,6 +216,31 @@ private fun LoadableMap(
             color = const(palette.visitedOutline),
             width = const(1.5.dp),
         )
+        if (userLocation != null) {
+            // rememberGeoJsonSource setData()s on recomposition, so the dot moves with new fixes.
+            val youAreHere = rememberGeoJsonSource(
+                GeoJsonData.JsonString(
+                    """{"type":"Feature","properties":{},"geometry":""" +
+                        """{"type":"Point","coordinates":[${userLocation.longitude},${userLocation.latitude}]}}""",
+                ),
+            )
+            // No click handlers: taps pass through to the state polygons underneath.
+            CircleLayer(
+                id = "you-are-here-halo",
+                source = youAreHere,
+                color = const(palette.youAreHere),
+                opacity = const(0.2f),
+                radius = const(14.dp),
+            )
+            CircleLayer(
+                id = "you-are-here-dot",
+                source = youAreHere,
+                color = const(palette.youAreHere),
+                radius = const(5.dp),
+                strokeColor = const(Color.White),
+                strokeWidth = const(2.dp),
+            )
+        }
     }
 }
 

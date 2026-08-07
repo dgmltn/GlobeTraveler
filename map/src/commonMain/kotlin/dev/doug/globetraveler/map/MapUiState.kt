@@ -1,5 +1,6 @@
 package dev.doug.globetraveler.map
 
+import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.domain.CameraDefaults
 import dev.doug.globetraveler.domain.Region
 import dev.doug.globetraveler.domain.Visit
@@ -18,6 +19,7 @@ data class MapUiState(
     val visitedCodes: ImmutableSet<String> = persistentSetOf(),
     val geometryGeoJson: String = EMPTY_FEATURE_COLLECTION,
     val details: RegionDetails? = null,
+    val userLocation: ApproximateLocation? = null,
 ) {
     val visitedCount: Int get() = visitedCodes.size
 }

@@ -1,5 +1,7 @@
 package dev.doug.globetraveler.map
 
+import dev.doug.globetraveler.domain.ApproximateLocation
+import dev.doug.globetraveler.map.fakes.FakeDeviceLocationRepository
 import dev.doug.globetraveler.map.fakes.FakeMapPackRepository
 import dev.doug.globetraveler.map.fakes.FakeVisitRepository
 import dev.doug.globetraveler.map.fakes.TEST_GEOMETRY
@@ -23,11 +25,13 @@ import kotlinx.datetime.LocalDate
 class MapViewModelTest {
 
     private lateinit var viewModel: MapViewModel
+    private lateinit var locationRepository: FakeDeviceLocationRepository
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = MapViewModel(FakeMapPackRepository(), FakeVisitRepository())
+        locationRepository = FakeDeviceLocationRepository()
+        viewModel = MapViewModel(FakeMapPackRepository(), FakeVisitRepository(), locationRepository)
     }
 
     @AfterTest
@@ -48,6 +52,19 @@ class MapViewModelTest {
         assertEquals(emptySet(), state.visitedCodes)
         assertEquals(39.5, state.cameraDefaults?.latitude)
         assertEquals(TEST_GEOMETRY, state.geometryGeoJson)
+    }
+
+    @Test
+    fun `user location flows into state and can move`() = runTest {
+        val loaded = awaitState { !it.loading }
+        assertNull(loaded.userLocation)
+
+        locationRepository.emit(ApproximateLocation(latitude = 33.0, longitude = -117.0))
+        val located = awaitState { it.userLocation != null }
+        assertEquals(ApproximateLocation(latitude = 33.0, longitude = -117.0), located.userLocation)
+
+        locationRepository.emit(ApproximateLocation(latitude = 45.5, longitude = -122.6))
+        awaitState { it.userLocation == ApproximateLocation(latitude = 45.5, longitude = -122.6) }
     }
 
     @Test
