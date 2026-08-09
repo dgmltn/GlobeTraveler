@@ -22,6 +22,7 @@ kotlin {
             implementation(libs.lifecycle.viewmodelCompose)
             implementation(libs.lifecycle.runtimeCompose)
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.compose.componentsResources)
             implementation(libs.kotlinx.serializationJson)
             implementation(libs.kotlinx.collectionsImmutable)
             implementation(libs.kotlinx.datetime)
@@ -32,6 +33,11 @@ kotlin {
             implementation(libs.kotlinx.coroutinesTest)
         }
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "dev.doug.globetraveler.map"
 }
 
 android {

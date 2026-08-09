@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,8 +57,10 @@ import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.Feature
 import org.maplibre.spatialk.geojson.Position
 
-private const val LIGHT_STYLE_URI = "https://tiles.openfreemap.org/styles/positron"
-private const val DARK_STYLE_URI = "https://tiles.openfreemap.org/styles/dark"
+// Pre-stripped OpenFreeMap styles (state names only, no city/country labels),
+// bundled by scripts/strip-basemap-labels.py.
+private const val LIGHT_STYLE_ASSET = "files/basemap-light.json"
+private const val DARK_STYLE_ASSET = "files/basemap-dark.json"
 
 @Composable
 fun MapScreen(viewModel: MapViewModel = koinViewModel()) {
@@ -169,8 +172,15 @@ private fun LoadableMap(
     // (dark icons in light mode, light in dark), so they stay legible over the tiles.
     val darkTheme = isSystemInDarkTheme()
     val palette = if (darkTheme) MapPalette.Dark else MapPalette.Light
+    val styleJson by produceState<String?>(initialValue = null, darkTheme) {
+        value = Res.readBytes(if (darkTheme) DARK_STYLE_ASSET else LIGHT_STYLE_ASSET)
+            .decodeToString()
+    }
+    // On first composition the style isn't read yet; on a theme flip produceState keeps the
+    // old style until the new one lands, so the map never unloads.
+    val baseStyle = styleJson ?: return
     MaplibreMap(
-        baseStyle = BaseStyle.Uri(if (darkTheme) DARK_STYLE_URI else LIGHT_STYLE_URI),
+        baseStyle = BaseStyle.Json(baseStyle),
         cameraState = camera,
         options = MapOptions(
             // North-up always: with rotation impossible the compass never appears, so it

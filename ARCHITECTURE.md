@@ -15,7 +15,10 @@ Key decisions:
 
 - **Map rendering:** MapLibre Native via maplibre-compose (shared `commonMain` map UI),
   OpenFreeMap base styles (Positron in light mode, Dark in dark mode, following the
-  system color scheme), no API key. Visited-ness is rendered as two GeoJSON
+  system color scheme), no API key. The style JSONs are bundled pre-stripped to
+  state-name-only labels (no city/town/country names) by
+  `scripts/strip-basemap-labels.py`; tiles/glyphs/sprites still stream from
+  openfreemap.org. Visited-ness is rendered as two GeoJSON
   sources (visited/unvisited) recomputed by the ViewModel from Room state.
 - **Map packs are data:** a descriptor JSON (regions, camera) + a GeoJSON
   FeatureCollection whose features carry a `code` property. `us-states` is the only pack
