@@ -24,25 +24,11 @@ kotlin {
             implementation(libs.kermit)
             implementation(libs.compose.runtime)
             implementation(libs.compose.componentsResources)
-            implementation(libs.ktor.clientCore)
-            implementation(libs.ktor.clientContentNegotiation)
-            implementation(libs.ktor.serializationKotlinxJson)
-            implementation(libs.ktor.clientLogging)
-        }
-        androidMain.dependencies {
-            implementation(libs.ktor.clientOkhttp)
-        }
-        iosMain.dependencies {
-            implementation(libs.ktor.clientDarwin)
-        }
-        jvmMain.dependencies {
-            implementation(libs.ktor.clientJava)
         }
         jvmTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutinesTest)
             implementation(libs.kotlinx.coroutinesCore)
-            implementation(libs.ktor.clientMock)
         }
     }
 }

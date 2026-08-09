@@ -20,6 +20,7 @@ targets:
         CFBundleDisplayName: GlobeTraveler
         UILaunchScreen: {}
         CADisableMinimumFrameDurationOnPhone: true
+        NSLocationWhenInUseUsageDescription: Shows an approximate you-are-here dot on the map.
     dependencies:
       - package: MapLibre
         product: MapLibre
