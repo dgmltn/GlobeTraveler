@@ -1,13 +1,17 @@
 package dev.doug.globetraveler.map
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -99,10 +104,10 @@ fun MapContent(
         if (state.loading) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
-            CounterChip(
+            CounterScrim(
                 visitedCount = state.visitedCount,
                 totalCount = state.totalCount,
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 48.dp),
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         }
         val details = state.details
@@ -299,37 +304,53 @@ private fun Preview_MapLoadErrorBanner() {
     }
 }
 
+// Full-width scrim behind the status bar and counter: theme background (matched to the
+// basemap ground color) fading to transparent, so the map appears to fade out at the top.
+// Purely decorative — no click handlers, map gestures under it are unaffected.
 @Composable
-fun CounterChip(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
-    // Deliberately theme-independent: the black scrim + white text stays legible over
-    // both the light and dark basemaps, so the chip doesn't track the color scheme.
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(50),
-        color = Color.Black.copy(alpha = 0.55f),
-        contentColor = Color.White,
+private fun CounterScrim(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(MaterialTheme.colorScheme.background, Color.Transparent),
+                ),
+            )
+            .windowInsetsPadding(WindowInsets.statusBars),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "$visitedCount / $totalCount visited",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.titleMedium,
+        VisitedCounter(
+            visitedCount = visitedCount,
+            totalCount = totalCount,
+            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp),
         )
     }
 }
 
+@Composable
+fun VisitedCounter(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
+    Text(
+        text = "$visitedCount / $totalCount visited",
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.onBackground,
+        style = MaterialTheme.typography.titleMedium,
+    )
+}
+
 @Preview
 @Composable
-private fun Preview_CounterChip() {
+private fun Preview_VisitedCounter() {
     GlobeTheme {
-        CounterChip(visitedCount = 12, totalCount = 50)
+        VisitedCounter(visitedCount = 12, totalCount = 50)
     }
 }
 
 @Preview
 @Composable
-private fun Preview_CounterChip_None() {
+private fun Preview_VisitedCounter_None() {
     GlobeTheme {
-        CounterChip(visitedCount = 0, totalCount = 50)
+        VisitedCounter(visitedCount = 0, totalCount = 50)
     }
 }
 
