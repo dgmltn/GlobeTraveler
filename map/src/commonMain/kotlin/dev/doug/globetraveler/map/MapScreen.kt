@@ -1,13 +1,11 @@
 package dev.doug.globetraveler.map
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -27,13 +25,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.doug.globetraveler.design.GlobeTheme
 import dev.doug.globetraveler.design.MapPalette
+import dev.doug.globetraveler.design.fadeInOut
 import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.domain.CameraDefaults
 import kotlinx.collections.immutable.ImmutableSet
@@ -104,10 +102,13 @@ fun MapContent(
         if (state.loading) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
-            CounterScrim(
+            VisitedCounter(
                 visitedCount = state.visitedCount,
                 totalCount = state.totalCount,
-                modifier = Modifier.align(Alignment.TopCenter),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = 8.dp),
             )
         }
         val details = state.details
@@ -194,7 +195,12 @@ private fun LoadableMap(
             ornamentOptions = globeOrnamentOptions(WindowInsets.safeDrawing.asPaddingValues()),
         ),
         onMapLoadFailed = { onLoadFailed() },
-        modifier = Modifier.fillMaxSize(),
+        // The map fades out under the status bar and counter (theme background matches the
+        // basemap ground color, so it reads as the map dissolving, not a band).
+        modifier = Modifier.fillMaxSize().fadeInOut(
+            color = MaterialTheme.colorScheme.background,
+            topHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 56.dp,
+        ),
     ) {
         // The geometry is loaded into a single static source exactly once; visited-ness
         // is a layer filter, so toggling never re-parses or re-tessellates the polygons.
@@ -301,30 +307,6 @@ fun MapLoadErrorBanner(onRetry: () -> Unit, modifier: Modifier = Modifier) {
 private fun Preview_MapLoadErrorBanner() {
     GlobeTheme {
         MapLoadErrorBanner(onRetry = {})
-    }
-}
-
-// Full-width scrim behind the status bar and counter: theme background (matched to the
-// basemap ground color) fading to transparent, so the map appears to fade out at the top.
-// Purely decorative — no click handlers, map gestures under it are unaffected.
-@Composable
-private fun CounterScrim(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.background, Color.Transparent),
-                ),
-            )
-            .windowInsetsPadding(WindowInsets.statusBars),
-        contentAlignment = Alignment.Center,
-    ) {
-        VisitedCounter(
-            visitedCount = visitedCount,
-            totalCount = totalCount,
-            modifier = Modifier.padding(top = 8.dp, bottom = 20.dp),
-        )
     }
 }
 

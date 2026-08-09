@@ -28,6 +28,14 @@ map fading out, and `onBackground` text is legible over it in both themes.
 - No touch handling: the scrim is decorative; map gestures under it are unaffected
   (Box has no click handlers, so taps pass through as before).
 
+## Revision (same day)
+
+The ad-hoc gradient `Box` was replaced by `Modifier.fadeInOut(color, topHeight,
+bottomHeight)` in `:design`, ported from WorldClock: color stops at explicit dp distances
+drawn over the content via `drawWithContent`, `Dp.Unspecified` skips an edge. Applied to
+the `MaplibreMap` modifier with `topHeight = status-bar inset + 56.dp`; `VisitedCounter`
+is positioned directly with status-bar insets (no wrapper composable).
+
 ## Testing
 
 Compile + previews; ViewModel tests untouched (pure presentation change). On-device look
