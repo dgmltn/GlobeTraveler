@@ -10,12 +10,12 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Guards the output of scripts/strip-basemap-labels.py: the bundled basemap styles must show
- * state names and no other place names.
+ * US state names and country names — no other place names.
  */
 class BundledBasemapStyleTest {
 
     @Test
-    fun bundled_styles_have_no_place_labels_except_states() {
+    fun bundled_styles_show_only_us_states_and_countries() {
         for (name in listOf("basemap-light.json", "basemap-dark.json")) {
             val file = File("src/commonMain/composeResources/files/$name")
             assertTrue(file.exists(), "$name missing — run scripts/strip-basemap-labels.py")
@@ -23,14 +23,21 @@ class BundledBasemapStyleTest {
             val layers = Json.parseToJsonElement(file.readText()).jsonObject
                 .getValue("layers").jsonArray
                 .map { it.jsonObject }
-            val placeLayerIds = layers
+            val placeLayers = layers
                 .filter { it["source-layer"]?.jsonPrimitive?.content == "place" }
-                .map { it.getValue("id").jsonPrimitive.content }
+                .associate { it.getValue("id").jsonPrimitive.content to it["filter"].toString() }
 
-            assertTrue(placeLayerIds.isNotEmpty(), "$name: state label layer missing")
+            val stateLayers = placeLayers.filterKeys { it.endsWith("_state") }
+            val countryLayers = placeLayers.filterKeys { "country" in it }
+            assertTrue(stateLayers.size == 1, "$name: state layers ${stateLayers.keys}")
+            assertTrue(countryLayers.isNotEmpty(), "$name: country label layers missing")
             assertTrue(
-                placeLayerIds.all { it.endsWith("_state") },
-                "$name: unexpected place labels $placeLayerIds",
+                placeLayers.size == stateLayers.size + countryLayers.size,
+                "$name: unexpected place labels ${placeLayers.keys}",
+            )
+            assertTrue(
+                "Wyoming" in stateLayers.values.single(),
+                "$name: state layer lacks the US name filter",
             )
         }
     }

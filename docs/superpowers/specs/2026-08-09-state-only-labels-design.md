@@ -35,6 +35,15 @@ the bundled JSON for the current color scheme via `Res.readBytes` and passes
 `BaseStyle.Json` instead of `BaseStyle.Uri`. Until the local read completes (instant in
 practice) the map isn't composed — same gate as pack loading.
 
+## Revision (same day)
+
+Outside the US, country names should show — and non-US states/provinces should not.
+The script now keeps the `*country*` label layers and injects a US-only name filter
+into the state layer (`["in", ["get","name"], ["literal", <the 50 region names from
+us-states.descriptor.json>]]`, ANDed with the existing class filter), so the map pack
+descriptor stays the single source of truth for which states label. Continents and all
+city/town/village/suburb labels remain stripped.
+
 ## Testing
 
 An `:map` host-side unit test reads both bundled files (module-relative path) and
