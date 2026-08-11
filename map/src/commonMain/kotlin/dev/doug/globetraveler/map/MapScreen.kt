@@ -31,9 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.doug.globetraveler.design.GlobeTheme
 import dev.doug.globetraveler.design.MapPalette
+import dev.doug.globetraveler.design.accentColors
 import dev.doug.globetraveler.design.fadeInOut
 import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.domain.CameraDefaults
+import dev.doug.globetraveler.domain.MapAccent
+import dev.doug.globetraveler.domain.TrackedMapId
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.JsonObject
@@ -72,6 +75,8 @@ fun MapScreen(viewModel: MapViewModel = koinViewModel()) {
         state = state,
         onRegionTapped = viewModel::onRegionTapped,
         onRegionLongPressed = viewModel::onRegionLongPressed,
+        onMapSelected = viewModel::onMapSelected,
+        onMapCreated = viewModel::onMapCreated,
         onDetailsSave = viewModel::onDetailsSave,
         onDetailsRemoveVisit = viewModel::onDetailsRemoveVisit,
         onDetailsDismissed = viewModel::onDetailsDismissed,
@@ -83,6 +88,8 @@ fun MapContent(
     state: MapUiState,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
+    onMapSelected: (TrackedMapId) -> Unit,
+    onMapCreated: (String) -> Unit,
     onDetailsSave: (LocalDate?, String?) -> Unit,
     onDetailsRemoveVisit: () -> Unit,
     onDetailsDismissed: () -> Unit,
@@ -94,17 +101,23 @@ fun MapContent(
                 cameraDefaults = cameraDefaults,
                 geometryGeoJson = state.geometryGeoJson,
                 visitedCodes = state.visitedCodes,
+                accent = state.activeMap?.accent ?: MapAccent.Green,
                 userLocation = state.userLocation,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
             )
         }
+        val activeMap = state.activeMap
         if (state.loading) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
-        } else {
-            VisitedCounter(
+        } else if (activeMap != null) {
+            MapSwitcher(
+                activeMap = activeMap,
+                maps = state.maps,
                 visitedCount = state.visitedCount,
                 totalCount = state.totalCount,
+                onMapSelected = onMapSelected,
+                onMapCreated = onMapCreated,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.statusBars)
@@ -128,6 +141,7 @@ private fun StatesMap(
     cameraDefaults: CameraDefaults,
     geometryGeoJson: String,
     visitedCodes: ImmutableSet<String>,
+    accent: MapAccent,
     userLocation: ApproximateLocation?,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
@@ -140,6 +154,7 @@ private fun StatesMap(
                 cameraDefaults = cameraDefaults,
                 geometryGeoJson = geometryGeoJson,
                 visitedCodes = visitedCodes,
+                accent = accent,
                 userLocation = userLocation,
                 onRegionTapped = onRegionTapped,
                 onRegionLongPressed = onRegionLongPressed,
@@ -163,6 +178,7 @@ private fun LoadableMap(
     cameraDefaults: CameraDefaults,
     geometryGeoJson: String,
     visitedCodes: ImmutableSet<String>,
+    accent: MapAccent,
     userLocation: ApproximateLocation?,
     onRegionTapped: (String) -> Unit,
     onRegionLongPressed: (String) -> Unit,
@@ -178,6 +194,7 @@ private fun LoadableMap(
     // (dark icons in light mode, light in dark), so they stay legible over the tiles.
     val darkTheme = isSystemInDarkTheme()
     val palette = if (darkTheme) MapPalette.Dark else MapPalette.Light
+    val accentColors = accent.accentColors(darkTheme)
     val styleJson by produceState<String?>(initialValue = null, darkTheme) {
         value = Res.readBytes(if (darkTheme) DARK_STYLE_ASSET else LIGHT_STYLE_ASSET)
             .decodeToString()
@@ -225,7 +242,7 @@ private fun LoadableMap(
             id = "visited-fill",
             source = states,
             filter = isVisited,
-            color = const(palette.visitedFill),
+            color = const(accentColors.fill),
             opacity = const(0.6f),
             onClick = tapHandler(onRegionTapped),
             onLongClick = tapHandler(onRegionLongPressed),
@@ -234,7 +251,7 @@ private fun LoadableMap(
             id = "visited-borders",
             source = states,
             filter = isVisited,
-            color = const(palette.visitedOutline),
+            color = const(accentColors.outline),
             width = const(1.5.dp),
         )
         if (userLocation != null) {
@@ -310,32 +327,6 @@ private fun Preview_MapLoadErrorBanner() {
     }
 }
 
-@Composable
-fun VisitedCounter(visitedCount: Int, totalCount: Int, modifier: Modifier = Modifier) {
-    Text(
-        text = "$visitedCount / $totalCount visited",
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.onBackground,
-        style = MaterialTheme.typography.titleMedium,
-    )
-}
-
-@Preview
-@Composable
-private fun Preview_VisitedCounter() {
-    GlobeTheme {
-        VisitedCounter(visitedCount = 12, totalCount = 50)
-    }
-}
-
-@Preview
-@Composable
-private fun Preview_VisitedCounter_None() {
-    GlobeTheme {
-        VisitedCounter(visitedCount = 0, totalCount = 50)
-    }
-}
-
 @Preview
 @Composable
 private fun Preview_MapContent_Loading() {
@@ -344,6 +335,8 @@ private fun Preview_MapContent_Loading() {
             state = MapUiState(loading = true),
             onRegionTapped = {},
             onRegionLongPressed = {},
+            onMapSelected = {},
+            onMapCreated = {},
             onDetailsSave = { _, _ -> },
             onDetailsRemoveVisit = {},
             onDetailsDismissed = {},

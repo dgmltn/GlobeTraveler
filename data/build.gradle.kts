@@ -19,6 +19,7 @@ kotlin {
             api(project(":domain"))
             implementation(libs.room3.runtime)
             implementation(libs.sqlite.bundled)
+            implementation(libs.datastore.preferencesCore)
             implementation(libs.koin.core)
             implementation(libs.kotlinx.serializationJson)
             implementation(libs.kermit)

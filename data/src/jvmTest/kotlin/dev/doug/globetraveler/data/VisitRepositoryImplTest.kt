@@ -2,7 +2,7 @@ package dev.doug.globetraveler.data
 
 import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import dev.doug.globetraveler.domain.MapId
+import dev.doug.globetraveler.domain.TrackedMapId
 import dev.doug.globetraveler.domain.RegionCode
 import dev.doug.globetraveler.domain.RegionId
 import dev.doug.globetraveler.domain.Visit
@@ -30,7 +30,7 @@ class VisitRepositoryImplTest {
     private val clock = MutableClock(Instant.fromEpochMilliseconds(1_000))
     private val repository = VisitRepositoryImpl(database.visitDao(), clock)
 
-    private val mapId = MapId("us-states")
+    private val mapId = TrackedMapId("visited")
     private val california = RegionId(mapId, RegionCode("CA"))
 
     @AfterTest
@@ -94,9 +94,20 @@ class VisitRepositoryImplTest {
     @Test
     fun `observeVisits filters by map`() = runTest {
         repository.toggle(california)
-        repository.toggle(RegionId(MapId("world-countries"), RegionCode("CA")))
+        repository.toggle(RegionId(TrackedMapId("plates"), RegionCode("CA")))
 
         val visits = repository.observeVisits(mapId).first { it.isNotEmpty() }
         assertEquals(listOf(california), visits.map { it.regionId })
+    }
+
+    @Test
+    fun `observeVisitCounts groups by tracked map`() = runTest {
+        repository.toggle(california)
+        repository.toggle(RegionId(mapId, RegionCode("OR")))
+        repository.toggle(RegionId(TrackedMapId("plates"), RegionCode("CA")))
+
+        val counts = repository.observeVisitCounts().first { it.isNotEmpty() }
+        assertEquals(2, counts[mapId])
+        assertEquals(1, counts[TrackedMapId("plates")])
     }
 }

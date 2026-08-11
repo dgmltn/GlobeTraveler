@@ -3,8 +3,10 @@ package dev.doug.globetraveler.map
 import dev.doug.globetraveler.domain.ApproximateLocation
 import dev.doug.globetraveler.map.fakes.FakeDeviceLocationRepository
 import dev.doug.globetraveler.map.fakes.FakeMapPackRepository
+import dev.doug.globetraveler.map.fakes.FakeTrackedMapRepository
 import dev.doug.globetraveler.map.fakes.FakeVisitRepository
 import dev.doug.globetraveler.map.fakes.TEST_GEOMETRY
+import dev.doug.globetraveler.map.fakes.TEST_VISITED_MAP
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -26,12 +28,19 @@ class MapViewModelTest {
 
     private lateinit var viewModel: MapViewModel
     private lateinit var locationRepository: FakeDeviceLocationRepository
+    private lateinit var trackedMapRepository: FakeTrackedMapRepository
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         locationRepository = FakeDeviceLocationRepository()
-        viewModel = MapViewModel(FakeMapPackRepository(), FakeVisitRepository(), locationRepository)
+        trackedMapRepository = FakeTrackedMapRepository()
+        viewModel = MapViewModel(
+            FakeMapPackRepository(),
+            FakeVisitRepository(),
+            trackedMapRepository,
+            locationRepository,
+        )
     }
 
     @AfterTest
@@ -129,6 +138,52 @@ class MapViewModelTest {
         val state = awaitState { it.visitedCount == 0 }
         assertNull(state.details)
     }
+
+    @Test
+    fun `default map is active with its accent exposed`() = runTest {
+        val state = awaitState { it.activeMap != null }
+
+        assertEquals(TEST_VISITED_MAP, state.activeMap)
+        assertEquals(1, state.maps.size)
+    }
+
+    @Test
+    fun `creating a map switches to it and visits are independent`() = runTest {
+        awaitState { !it.loading }
+        viewModel.onRegionTapped("CA")
+        awaitState { it.visitedCount == 1 }
+
+        viewModel.onMapCreated("License plates")
+        val switched = awaitState { it.activeMap?.name == "License plates" }
+        assertEquals(0, switched.visitedCount)
+        assertEquals(2, switched.maps.size)
+
+        viewModel.onRegionTapped("NV")
+        awaitState { it.visitedCodes == setOf("NV") }
+
+        viewModel.onMapSelected(TEST_VISITED_MAP.id)
+        val back = awaitState { it.activeMap == TEST_VISITED_MAP }
+        awaitState { it.visitedCodes == setOf("CA") }
+        assertEquals(TEST_VISITED_MAP, back.activeMap)
+    }
+
+    @Test
+    fun `switcher rows carry per-map counts`() = runTest {
+        awaitState { !it.loading }
+        viewModel.onRegionTapped("CA")
+        viewModel.onRegionTapped("OR")
+        awaitState { it.visitedCount == 2 }
+
+        viewModel.onMapCreated("License plates")
+        awaitState { it.activeMap?.name == "License plates" }
+        viewModel.onRegionTapped("NV")
+
+        val state = awaitState { rowsByName(it)["License plates"] == 1 }
+        assertEquals(2, rowsByName(state)["Visited"])
+    }
+
+    private fun rowsByName(state: MapUiState): Map<String, Int> =
+        state.maps.associate { it.map.name to it.visitedCount }
 
     @Test
     fun `dismissing details clears them`() = runTest {

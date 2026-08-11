@@ -4,6 +4,7 @@ agp = "8.13.2"
 composeMultiplatform = "1.11.1"
 composeMaterial3 = "1.9.0"
 ksp = "2.3.11"
+datastore = "1.2.1"
 room3 = "3.0.1"
 sqlite = "2.7.0"
 activityCompose = "1.13.0"
@@ -40,6 +41,7 @@ compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", v
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "composeMultiplatform" }
 compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "composeMultiplatform" }
 compose-componentsResources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "composeMultiplatform" }
+datastore-preferencesCore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 androidx-activityCompose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 

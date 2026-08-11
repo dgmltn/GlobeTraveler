@@ -24,8 +24,11 @@ Key decisions:
 - **Map packs are data:** a descriptor JSON (regions, camera) + a GeoJSON
   FeatureCollection whose features carry a `code` property. `us-states` is the only pack
   in v1 and is hardcoded in `:map`.
-- **Visits:** one Room row per visited region, keyed `(mapId, regionCode)`; row
-  existence = visited; optional `visitedAt` date and `notes`.
+- **Tracked maps:** several named collections over the same geography ("Visited",
+  "License plates", …), each with an accent color; one is active at a time (selection in
+  DataStore), switched from the top-center title menu. A default "Visited" map is seeded.
+- **Visits:** one Room row per marked region, keyed `(trackedMapId, regionCode)`; row
+  existence = marked; optional `visitedAt` date and `notes` — all per tracked map.
 - **Approximate location:** the "you are here" dot comes from the platform's location
   service at coarse/reduced accuracy (framework `LocationManager` on Android, CoreLocation
   at ~3 km on iOS) — state-level accuracy, no GPS precision requested. Denied permission
