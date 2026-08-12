@@ -77,6 +77,8 @@ fun MapScreen(viewModel: MapViewModel = koinViewModel()) {
         onRegionLongPressed = viewModel::onRegionLongPressed,
         onMapSelected = viewModel::onMapSelected,
         onMapCreated = viewModel::onMapCreated,
+        onMapRenamed = viewModel::onMapRenamed,
+        onMapDeleted = viewModel::onMapDeleted,
         onDetailsSave = viewModel::onDetailsSave,
         onDetailsRemoveVisit = viewModel::onDetailsRemoveVisit,
         onDetailsDismissed = viewModel::onDetailsDismissed,
@@ -90,6 +92,8 @@ fun MapContent(
     onRegionLongPressed: (String) -> Unit,
     onMapSelected: (TrackedMapId) -> Unit,
     onMapCreated: (String) -> Unit,
+    onMapRenamed: (TrackedMapId, String) -> Unit,
+    onMapDeleted: (TrackedMapId) -> Unit,
     onDetailsSave: (LocalDate?, String?) -> Unit,
     onDetailsRemoveVisit: () -> Unit,
     onDetailsDismissed: () -> Unit,
@@ -118,6 +122,8 @@ fun MapContent(
                 totalCount = state.totalCount,
                 onMapSelected = onMapSelected,
                 onMapCreated = onMapCreated,
+                onMapRenamed = onMapRenamed,
+                onMapDeleted = onMapDeleted,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.statusBars)
@@ -337,6 +343,8 @@ private fun Preview_MapContent_Loading() {
             onRegionLongPressed = {},
             onMapSelected = {},
             onMapCreated = {},
+            onMapRenamed = { _, _ -> },
+            onMapDeleted = {},
             onDetailsSave = { _, _ -> },
             onDetailsRemoveVisit = {},
             onDetailsDismissed = {},

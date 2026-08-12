@@ -34,4 +34,9 @@ interface TrackedMapRepository {
     suspend fun create(name: String): TrackedMap
 
     suspend fun setActive(id: TrackedMapId)
+
+    suspend fun rename(id: TrackedMapId, name: String)
+
+    /** Deletes the map and its visits. No-op on the last remaining map. */
+    suspend fun delete(id: TrackedMapId)
 }

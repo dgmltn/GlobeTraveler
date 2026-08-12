@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.onStart
 
 class TrackedMapRepositoryImpl(
     private val dao: TrackedMapDao,
+    private val visitDao: VisitDao,
     private val dataStore: DataStore<Preferences>,
     private val clock: Clock,
 ) : TrackedMapRepository {
@@ -61,6 +62,17 @@ class TrackedMapRepositoryImpl(
 
     override suspend fun setActive(id: TrackedMapId) {
         dataStore.edit { preferences -> preferences[ACTIVE_MAP_KEY] = id.value }
+    }
+
+    override suspend fun rename(id: TrackedMapId, name: String) {
+        dao.rename(id.value, name.trim())
+    }
+
+    override suspend fun delete(id: TrackedMapId) {
+        if (dao.count() <= 1) return
+        // Visits first: a crash in between leaves a map with no visits, never orphan visits.
+        visitDao.deleteAllFor(id.value)
+        dao.delete(id.value)
     }
 
     // Fixed id makes concurrent seeding idempotent (upsert of the same row).

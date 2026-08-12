@@ -186,6 +186,29 @@ class MapViewModelTest {
         state.maps.associate { it.map.name to it.visitedCount }
 
     @Test
+    fun `renaming a map updates rows and the active title`() = runTest {
+        awaitState { !it.loading }
+
+        viewModel.onMapRenamed(TEST_VISITED_MAP.id, "Been there")
+
+        val state = awaitState { it.activeMap?.name == "Been there" }
+        assertEquals(listOf("Been there"), state.maps.map { it.map.name })
+    }
+
+    @Test
+    fun `deleting the active map falls back and drops the row`() = runTest {
+        awaitState { !it.loading }
+        viewModel.onMapCreated("License plates")
+        val created = awaitState { it.maps.size == 2 }
+        val platesId = created.maps.first { it.map.name == "License plates" }.map.id
+
+        viewModel.onMapDeleted(platesId)
+
+        val state = awaitState { it.maps.size == 1 }
+        assertEquals(TEST_VISITED_MAP, state.activeMap)
+    }
+
+    @Test
     fun `dismissing details clears them`() = runTest {
         awaitState { !it.loading }
         viewModel.onRegionLongPressed("CA")

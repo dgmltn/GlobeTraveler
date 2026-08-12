@@ -22,6 +22,9 @@ interface VisitDao {
 
     @Query("DELETE FROM visits WHERE trackedMapId = :trackedMapId AND regionCode = :code")
     suspend fun delete(trackedMapId: String, code: String)
+
+    @Query("DELETE FROM visits WHERE trackedMapId = :trackedMapId")
+    suspend fun deleteAllFor(trackedMapId: String)
 }
 
 data class VisitCount(val trackedMapId: String, val visits: Int)

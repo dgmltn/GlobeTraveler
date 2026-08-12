@@ -41,7 +41,7 @@ fun dataModule(): Module = module {
         PreferenceDataStoreFactory.createWithPath(produceFile = { preferencesPath() })
     }
     single<VisitRepository> { VisitRepositoryImpl(get(), get()) }
-    single<TrackedMapRepository> { TrackedMapRepositoryImpl(get(), get(), get()) }
+    single<TrackedMapRepository> { TrackedMapRepositoryImpl(get(), get(), get(), get()) }
     single<MapPackRepository> { MapPackRepositoryImpl(get()) }
     single<DeviceLocationRepository> { deviceLocationRepository() }
 }

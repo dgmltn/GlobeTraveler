@@ -102,6 +102,16 @@ class MapViewModel(
         viewModelScope.launch { trackedMapRepository.create(name) }
     }
 
+    fun onMapRenamed(id: TrackedMapId, name: String) {
+        log.d { "renaming map ${id.value}" }
+        viewModelScope.launch { trackedMapRepository.rename(id, name) }
+    }
+
+    fun onMapDeleted(id: TrackedMapId) {
+        log.d { "deleting map ${id.value}" }
+        viewModelScope.launch { trackedMapRepository.delete(id) }
+    }
+
     fun onDetailsSave(visitedAt: LocalDate?, notes: String?) {
         val details = state.value.details ?: return
         val regionId = regionId(details.region.code.value) ?: return

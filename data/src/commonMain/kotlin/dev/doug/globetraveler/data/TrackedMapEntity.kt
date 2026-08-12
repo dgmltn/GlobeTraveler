@@ -31,6 +31,12 @@ interface TrackedMapDao {
 
     @Upsert
     suspend fun upsert(entity: TrackedMapEntity)
+
+    @Query("UPDATE tracked_maps SET name = :name WHERE id = :id")
+    suspend fun rename(id: String, name: String)
+
+    @Query("DELETE FROM tracked_maps WHERE id = :id")
+    suspend fun delete(id: String)
 }
 
 internal fun TrackedMapEntity.toTrackedMap(): TrackedMap = TrackedMap(

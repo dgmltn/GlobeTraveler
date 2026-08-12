@@ -109,6 +109,15 @@ class FakeTrackedMapRepository : TrackedMapRepository {
     override suspend fun setActive(id: TrackedMapId) {
         activeId.value = id
     }
+
+    override suspend fun rename(id: TrackedMapId, name: String) {
+        maps.value = maps.value.map { if (it.id == id) it.copy(name = name.trim()) else it }
+    }
+
+    override suspend fun delete(id: TrackedMapId) {
+        if (maps.value.size <= 1) return
+        maps.value = maps.value.filterNot { it.id == id }
+    }
 }
 
 class FakeDeviceLocationRepository : DeviceLocationRepository {

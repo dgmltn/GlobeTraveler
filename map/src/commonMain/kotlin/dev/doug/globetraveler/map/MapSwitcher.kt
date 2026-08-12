@@ -3,6 +3,7 @@ package dev.doug.globetraveler.map
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -43,10 +44,13 @@ fun MapSwitcher(
     totalCount: Int,
     onMapSelected: (TrackedMapId) -> Unit,
     onMapCreated: (String) -> Unit,
+    onMapRenamed: (TrackedMapId, String) -> Unit,
+    onMapDeleted: (TrackedMapId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var creating by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<MapRow?>(null) }
     val accent = activeMap.accent.accentColors(isSystemInDarkTheme()).fill
 
     Box(modifier) {
@@ -65,6 +69,17 @@ fun MapSwitcher(
                         Text(
                             text = "${row.map.name} · ${row.visitedCount}/$totalCount",
                             fontWeight = if (row.map.id == activeMap.id) FontWeight.Bold else null,
+                        )
+                    },
+                    trailingIcon = {
+                        Text(
+                            text = "✎",
+                            modifier = Modifier
+                                .clickable {
+                                    menuOpen = false
+                                    editing = row
+                                }
+                                .padding(horizontal = 4.dp),
                         )
                     },
                     onClick = {
@@ -90,6 +105,22 @@ fun MapSwitcher(
                 onMapCreated(name)
             },
             onDismiss = { creating = false },
+        )
+    }
+    editing?.let { row ->
+        EditMapDialog(
+            mapName = row.map.name,
+            visitedCount = row.visitedCount,
+            canDelete = maps.size > 1,
+            onRename = { name ->
+                editing = null
+                onMapRenamed(row.map.id, name)
+            },
+            onDelete = {
+                editing = null
+                onMapDeleted(row.map.id)
+            },
+            onDismiss = { editing = null },
         )
     }
 }
@@ -124,6 +155,81 @@ fun NewMapDialog(onCreate: (String) -> Unit, onDismiss: () -> Unit) {
     )
 }
 
+@Composable
+fun EditMapDialog(
+    mapName: String,
+    visitedCount: Int,
+    canDelete: Boolean,
+    onRename: (String) -> Unit,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by remember { mutableStateOf(mapName) }
+    var confirmingDelete by remember { mutableStateOf(false) }
+    if (confirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            title = { Text("Delete \"$mapName\"?") },
+            text = {
+                val states = if (visitedCount == 1) "state" else "states"
+                Text("Its $visitedCount marked $states, dates, and notes will be deleted.")
+            },
+            confirmButton = {
+                TextButton(onClick = onDelete) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmingDelete = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Edit map") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                    )
+                    TextButton(
+                        onClick = { confirmingDelete = true },
+                        enabled = canDelete,
+                        modifier = Modifier.padding(top = 8.dp),
+                    ) {
+                        Text(
+                            text = "Delete map",
+                            color = if (canDelete) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            },
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onRename(name) },
+                    enabled = name.isNotBlank(),
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+}
+
 private val PREVIEW_VISITED = TrackedMap(
     id = TrackedMapId("visited"),
     packId = MapId("us-states"),
@@ -151,6 +257,8 @@ private fun Preview_MapSwitcher() {
             totalCount = 50,
             onMapSelected = {},
             onMapCreated = {},
+            onMapRenamed = { _, _ -> },
+            onMapDeleted = {},
         )
     }
 }
@@ -166,6 +274,8 @@ private fun Preview_MapSwitcher_SecondMapActive() {
             totalCount = 50,
             onMapSelected = {},
             onMapCreated = {},
+            onMapRenamed = { _, _ -> },
+            onMapDeleted = {},
         )
     }
 }
@@ -175,5 +285,35 @@ private fun Preview_MapSwitcher_SecondMapActive() {
 private fun Preview_NewMapDialog() {
     GlobeTheme {
         NewMapDialog(onCreate = {}, onDismiss = {})
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_EditMapDialog() {
+    GlobeTheme {
+        EditMapDialog(
+            mapName = "License plates",
+            visitedCount = 12,
+            canDelete = true,
+            onRename = {},
+            onDelete = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_EditMapDialog_LastMap() {
+    GlobeTheme {
+        EditMapDialog(
+            mapName = "Visited",
+            visitedCount = 12,
+            canDelete = false,
+            onRename = {},
+            onDelete = {},
+            onDismiss = {},
+        )
     }
 }
