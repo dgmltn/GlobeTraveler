@@ -2,13 +2,18 @@ package dev.doug.globetraveler.map
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,10 +23,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.doug.globetraveler.design.Edit
+import dev.doug.globetraveler.design.GlobeIcons
 import dev.doug.globetraveler.design.GlobeTheme
 import dev.doug.globetraveler.design.accentColors
 import dev.doug.globetraveler.domain.MapAccent
@@ -72,15 +80,17 @@ fun MapSwitcher(
                         )
                     },
                     trailingIcon = {
-                        Text(
-                            text = "✎",
-                            modifier = Modifier
-                                .clickable {
-                                    menuOpen = false
-                                    editing = row
-                                }
-                                .padding(horizontal = 4.dp),
-                        )
+                        IconButton(
+                            onClick = {
+                                menuOpen = false
+                                editing = row
+                            },
+                        ) {
+                            Icon(
+                                imageVector = GlobeIcons.Edit,
+                                contentDescription = "Edit ${row.map.name}",
+                            )
+                        }
                     },
                     onClick = {
                         menuOpen = false
@@ -190,40 +200,41 @@ fun EditMapDialog(
             onDismissRequest = onDismiss,
             title = { Text("Edit map") },
             text = {
-                Column {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name") },
-                        singleLine = true,
-                    )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    singleLine = true,
+                )
+            },
+            // AlertDialog packs its two button slots against the trailing edge, so the whole
+            // action row lives in confirmButton: delete pinned left, cancel/save right.
+            confirmButton = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     TextButton(
                         onClick = { confirmingDelete = true },
                         enabled = canDelete,
-                        modifier = Modifier.padding(top = 8.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                     ) {
-                        Text(
-                            text = "Delete map",
-                            color = if (canDelete) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                            },
-                        )
+                        Text("Delete")
                     }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { onRename(name) },
-                    enabled = name.isNotBlank(),
-                ) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onDismiss) {
+                            Text("Cancel")
+                        }
+                        TextButton(
+                            onClick = { onRename(name) },
+                            enabled = name.isNotBlank(),
+                        ) {
+                            Text("Save")
+                        }
+                    }
                 }
             },
         )
