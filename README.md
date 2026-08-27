@@ -7,6 +7,8 @@ fills in green), long-press it to add a visit date and notes. Data stays on-devi
 Maps are data-driven "map packs" (region descriptor + GeoJSON), so future maps —
 counties in a state, countries of the world — are new data files, not new code.
 
+<img src="resources/screenshots/device-2026-08-26-184335.png" width="300" alt="GlobeTraveler map screen showing visited US states highlighted in blue">
+
 ## Build & run
 
 **Android**
